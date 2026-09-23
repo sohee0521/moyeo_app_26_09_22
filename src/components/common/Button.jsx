@@ -38,10 +38,10 @@ export default function Button({
 
     // [상단 칩/태그 버튼]
     "chip-default":
-      "bg-light-gray text-dark-gray rounded-full hover:bg-[#E5E5E5]",
-    "chip-primary": "bg-main-blue text-white rounded-full shadow-sm",
+      "!bg-light-gray !text-dark-gray rounded-full hover:!bg-[#E5E5E5]",
+    "chip-primary": "!bg-main-blue !text-white rounded-full shadow-sm",
     "chip-outline":
-      "bg-white text-main-blue border border-sub-blue rounded-full hover:bg-light-blue",
+      "!bg-white !text-main-blue border !border-sub-blue rounded-full hover:!bg-light-blue",
   };
 
   // 2. 크기 (Variant 유형에 따라 최적화)
@@ -50,7 +50,7 @@ export default function Button({
 
   let sizeStyle = "";
   if (isChip) {
-    sizeStyle = "px-3 py-1 text-xs";
+    sizeStyle = "px-4 py-2 ";
   } else if (isPill) {
     sizeStyle = "px-6 py-3.5 text-sm md:text-base font-semibold";
   } else {

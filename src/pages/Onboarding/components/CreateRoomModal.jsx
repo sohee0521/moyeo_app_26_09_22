@@ -4,6 +4,7 @@ import { ChevronLeft, X, Copy, Check, Camera } from "lucide-react";
 import profileDefault from "../../../img/profile-default.png";
 import crown from "../../../img/crown.png";
 import Button from "../../../components/common/Button";
+import { roomService } from "../../../services/roomService";
 
 export default function CreateRoomModal({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -66,15 +67,29 @@ export default function CreateRoomModal({ isOpen, onClose }) {
   };
 
   // 방 최종 생성 완료 후 방장으로 이동
-  const handleEnterRoom = () => {
-    localStorage.setItem(`room_${roomCode}_role`, "host");
-    localStorage.setItem(`room_${roomCode}_user`, nickname);
-    if (profileImage) {
-      localStorage.setItem(`room_${roomCode}_avatar`, profileImage);
-    }
+  const handleEnterRoom = async () => {
+    try {
+      // 1. Supabase rooms 테이블에 방 저장
+      await roomService.createRoom({
+        roomCode,
+        roomName,
+        hostNickname: nickname,
+      });
 
-    onClose();
-    navigate(`/room/${roomCode}/new-meeting`);
+      // 2. 방장 식별 정보 로컬 저장
+      localStorage.setItem(`room_${roomCode}_role`, "host");
+      localStorage.setItem(`room_${roomCode}_user`, nickname);
+      if (profileImage) {
+        localStorage.setItem(`room_${roomCode}_avatar`, profileImage);
+      }
+
+      onClose();
+      // 3. 생성된 방으로 이동
+      navigate(`/room/${roomCode}/new-meeting`);
+    } catch (err) {
+      console.error("방 생성 오류:", err);
+      alert("방 생성에 실패했습니다. 다시 시도해 주세요.");
+    }
   };
 
   return (
@@ -202,7 +217,7 @@ export default function CreateRoomModal({ isOpen, onClose }) {
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder=" 사용할 이름을 적어주세요."
-                className="!text-[14px] w-full rounded-lg border-2 border-light-gray px-3 py-2 text-xs sm:text-sm outline-none transition-colors focus:border-main-blue"
+                className="!text-[14px] w-full rounded-lg border-2 border-light-gray px-3 py-2 outline-none transition-colors focus:border-main-blue"
                 autoFocus
               />
             </div>
