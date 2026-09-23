@@ -153,12 +153,12 @@ export default function Sidebar({ roomIdProp }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-xs">
           <div className="w-full max-w-[320px] rounded-2xl bg-white p-6 shadow-xl text-center animate-fade-in-up">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-light-blue text-main-blue">
-              <AlertTriangle className="h-6 w-6 stroke-[2]" />
+              <LogOut className="h-6 w-6 stroke-[2]" />
             </div>
 
             <h5 className="text-black mb-1 font-bold">방을 나가시겠어요?</h5>
-            <p className="text-dark-gray leading-relaxed mb-6">
-              방 코드를 알고 계시면
+            <p className="text-dark-gray leading-snug mb-6 ">
+              방 코드를 알고 있으면
               <br />
               언제든 다시 들어올 수 있어요!
             </p>
