@@ -1,17 +1,23 @@
+import { useState } from "react";
 import Button from "../../components/common/Button";
 import { Calendar, MapPin, Utensils, ArrowRight } from "lucide-react";
 import PageTitle from "../../components/common/PageTitle";
 import moyeoCharacters from "../../img/onboarding-characters.png";
 
+import CreateRoomModal from "./components/CreateRoomModal";
+import JoinRoomModal from "./components/JoinRoomModal";
+
 export default function OnboardingPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+
   const handleOpenCreateModal = () => {
-    console.log("방 만들기 클릭");
+    setIsCreateModalOpen(true);
   };
 
   const handleOpenJoinModal = () => {
-    console.log("참여하기 클릭");
+    setIsJoinModalOpen(true);
   };
-
   return (
     <div className="relative min-h-screen w-full bg-white flex flex-col justify-between items-center px-4 sm:px-6 py-12 overflow-hidden select-none">
       <PageTitle title="시작하기" />
@@ -42,7 +48,7 @@ export default function OnboardingPage() {
       />
 
       {/* 우측 상단 문구  */}
-      <div className="absolute top-20 right-20 lg:top-30 lg:right-60 z-20 animate-fade-in-up delay-200">
+      <div className="absolute top-20 right-20 lg:top-30 lg:right-60 z-10 animate-fade-in-up delay-200">
         <p className="text-mid-gray text-left leading-tight">
           우리끼리 <span className="text-main-blue">모일 땐?</span>
           <br />
@@ -112,24 +118,26 @@ export default function OnboardingPage() {
 
         {/* 액션 버튼 */}
         <div className="flex items-center justify-center gap-3 sm:gap-4 w-full animate-fade-in-up delay-800">
-          <Button
-            variant="pill-light"
-            onClick={handleOpenCreateModal}
-            className="shadow-sm hover:scale-103"
-          >
+          <Button variant="pill-light" onClick={handleOpenCreateModal}>
             방만들기
             <ArrowRight className="w-4 h-4 ml-1.5 stroke-[2.2]" />
           </Button>
 
-          <Button
-            variant="pill-dark"
-            onClick={handleOpenJoinModal}
-            className="shadow-sm hover:scale-103"
-          >
+          <Button variant="pill-dark" onClick={handleOpenJoinModal}>
             참여하기
             <ArrowRight className="w-4 h-4 ml-1.5 stroke-[2.2]" />
           </Button>
         </div>
+
+        {/* 4. 모달 컴포넌트 마운트 */}
+        <CreateRoomModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
+        <JoinRoomModal
+          isOpen={isJoinModalOpen}
+          onClose={() => setIsJoinModalOpen(false)}
+        />
       </div>
 
       <div className="h-6" />
