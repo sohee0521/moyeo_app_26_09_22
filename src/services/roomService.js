@@ -181,4 +181,93 @@ export const roomService = {
     if (error) throw error;
     return true;
   },
+
+  // 모임에 속한 모든 투표 및 하위 옵션 목록 조회
+  async getVotesByMeetingId(meetingId) {
+    if (!meetingId) return [];
+
+    const { data, error } = await supabase
+      .from("polls")
+      .select(
+        `
+        *,
+        options:poll_options(*)
+      `,
+      )
+      .eq("meeting_id", meetingId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // 새 투표 생성
+  async createVote({
+    meetingId,
+    type,
+    title,
+    options = [],
+    allowMultiple = true,
+    dateRange = null,
+  }) {
+    // 1. polls 테이블에 투표 기본 정보 삽입
+    const { data: poll, error: pollError } = await supabase
+      .from("polls")
+      .insert([
+        {
+          meeting_id: meetingId,
+          type,
+          title,
+          status: "in_progress",
+          allow_multiple: allowMultiple,
+          date_range: dateRange,
+        },
+      ])
+      .select()
+      .single();
+
+    if (pollError) throw pollError;
+
+    // 2. 일반 투표(메뉴, 장소, 숙소, 기타)인 경우 poll_options에 선택지들 추가
+    if (type !== "date" && options.length > 0) {
+      const optionRows = options.map((label) => ({
+        poll_id: poll.id,
+        label,
+        voters: [],
+      }));
+
+      const { error: optionError } = await supabase
+        .from("poll_options")
+        .insert(optionRows);
+
+      if (optionError) throw optionError;
+    }
+
+    return poll;
+  },
+  // 현재 접속한 유저의 정보 조회 (Supabase Auth 또는 방 세션 기준)
+  async getCurrentMember(roomId) {
+    // 1. Supabase Auth 사용자 확인
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      // rooms_members 또는 members 테이블에서 해당 유저의 닉네임 조회
+      const { data: member } = await supabase
+        .from("room_members") // 프로젝트의 멤버 테이블 이름에 맞춰 확인
+        .select("*")
+        .eq("room_id", roomId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (member) return member;
+      return {
+        nickname: user.user_metadata?.nickname || user.email?.split("@")[0],
+        user_id: user.id,
+      };
+    }
+
+    return null;
+  },
 };

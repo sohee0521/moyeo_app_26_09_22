@@ -106,6 +106,11 @@ export default function JoinRoomModal({ isOpen, onClose }) {
   const handleSelectMember = (member) => {
     localStorage.setItem(`room_${roomCode}_role`, member.role);
     localStorage.setItem(`room_${roomCode}_user`, member.nickname);
+
+    // ★ [핵심] 현재 탭에서 활동하는 사용자 닉네임을 명확히 저장!
+    sessionStorage.setItem("current_nickname", member.nickname);
+    localStorage.setItem("current_user_nickname", member.nickname);
+
     if (member.avatar_url) {
       localStorage.setItem(`room_${roomCode}_avatar`, member.avatar_url);
     }
@@ -119,7 +124,7 @@ export default function JoinRoomModal({ isOpen, onClose }) {
     if (!nickname.trim()) return;
 
     try {
-      // Supabase 멤버 등록
+      // 1. Supabase room_members에 등록
       await supabase.from("room_members").insert([
         {
           room_code: roomCode,
@@ -129,9 +134,14 @@ export default function JoinRoomModal({ isOpen, onClose }) {
         },
       ]);
 
-      // 로컬 스토리지 저장
+      // 2. 현재 탭 세션 및 로컬 저장
       localStorage.setItem(`room_${roomCode}_role`, "member");
       localStorage.setItem(`room_${roomCode}_user`, nickname.trim());
+
+      // ★ [핵심] 현재 탭에서 활동하는 사용자 닉네임을 명확히 저장!
+      sessionStorage.setItem("current_nickname", nickname.trim());
+      localStorage.setItem("current_user_nickname", nickname.trim());
+
       if (profileImage) {
         localStorage.setItem(`room_${roomCode}_avatar`, profileImage);
       }

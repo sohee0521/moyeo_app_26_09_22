@@ -14,7 +14,8 @@ import Header from "./components/layout/Header";
 import OnboardingPage from "./pages/Onboarding/OnboardingPage";
 import NewMeetingPage from "./pages/NewMeeting/NewMeetingPage";
 import PlanPage from "./pages/Plan/PlanPage";
-import VoteDetailPage from "./pages/Plan/VoteDetailPage";
+import GeneralVoteDetail from "./pages/Plan/components/GeneralVoteDetail";
+import DateVoteDetail from "./pages/Plan/components/DateVoteDetail";
 import ExpensePage from "./pages/Expense/ExpensePage";
 import SecretPage from "./pages/Secret/SecretPage";
 import MemoryPage from "./pages/Memory/MemoryPage";
@@ -68,9 +69,15 @@ function AppLayout() {
 
             {/* 계획 및 투표 상세 */}
             <Route path="/room/:roomId/plan" element={<PlanPage />} />
+
             <Route
-              path="/room/:roomId/plan/vote/:pollId"
-              element={<VoteDetailPage />}
+              path="/room/:roomId/vote/:voteId"
+              element={<GeneralVoteDetail />}
+            />
+
+            <Route
+              path="/room/:roomId/date/:voteId"
+              element={<DateVoteDetail />}
             />
 
             {/* 정산 / 비밀기록 / 모임추억 */}

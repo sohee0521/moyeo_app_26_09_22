@@ -3,7 +3,49 @@ import { useLocation, useNavigate, useParams } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { useRoom } from "../../hooks/useRoom";
 import { roomService } from "../../services/roomService";
+import { supabase } from "../../services/supabaseClient";
 import profileDefault from "../../img/profile-default.png";
+
+// Header.jsx 상단
+const getLoggedInUserInfo = async () => {
+  // 2. 일반 스토리지 조회 (fallback)
+  const candidateKeys = [
+    "user",
+    "moyeo_user",
+    "room_user",
+    "current_user",
+    "member",
+    "nickname",
+    "moyeo_nickname",
+    "user_nickname",
+    "userName",
+  ];
+
+  for (const key of candidateKeys) {
+    const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+    if (!raw) continue;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.nickname) return parsed.nickname;
+      if (parsed?.name) return parsed.name;
+    } catch {
+      if (typeof raw === "string" && raw.trim() && !raw.startsWith("{")) {
+        return raw.replace(/"/g, "").trim();
+      }
+    }
+  }
+
+  // 3. Supabase Auth 확인
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user?.user_metadata?.nickname) return user.user_metadata.nickname;
+    if (user?.user_metadata?.name) return user.user_metadata.name;
+  } catch (e) {}
+
+  return "미확인";
+};
 
 export default function Header({ customTitle, roomIdProp }) {
   const location = useLocation();
@@ -21,27 +63,30 @@ export default function Header({ customTitle, roomIdProp }) {
   const [roomMembers, setRoomMembers] = useState([]);
   const [activeMeeting, setActiveMeeting] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [currentLoginUser, setCurrentLoginUser] = useState("확인 중...");
 
-  // 세부 상세 페이지 판별 (타입 3: 뒤로가기 화살표 노출)[cite: 4]
+  // 세부 상세 페이지 판별
   const isDetailPage =
     pathname.includes("/vote/") ||
     pathname.includes("/detail") ||
     pathname.includes("/date/");
 
-  // 전체 방 멤버 기준 메뉴 판별 (타입 1)[cite: 4]
+  // 전체 방 멤버 기준 메뉴 판별
   const isOverviewMenu =
     pathname.includes("/new-meeting") || pathname.includes("/memory");
 
-  // Supabase 데이터 조회 (방 전체 멤버 및 현재 모임 정보)
+  // Supabase 데이터 및 현재 접속자 조회
   const fetchHeaderData = async () => {
     if (!currentRoomCode) return;
     try {
-      const [members, meeting] = await Promise.all([
+      const [members, meeting, loggedInUser] = await Promise.all([
         roomService.getRoomMembers(currentRoomCode),
         roomService.getActiveMeeting(currentRoomCode),
+        getLoggedInUserInfo(),
       ]);
       setRoomMembers(members || []);
       setActiveMeeting(meeting);
+      setCurrentLoginUser(loggedInUser);
     } catch (err) {
       console.error("헤더 데이터 조회 실패:", err);
     }
@@ -81,8 +126,7 @@ export default function Header({ customTitle, roomIdProp }) {
     }
   };
 
-  // 페이지 성격에 따른 멤버 분기[cite: 4]
-  // isOverviewMenu: 방 전체 멤버 / 나머지 페이지: 현재 모임에 참가한 멤버만 필터링
+  // 페이지 성격에 따른 멤버 분기
   const displayMembers = isOverviewMenu
     ? roomMembers
     : roomMembers.filter((m) => activeMeeting?.members?.includes(m.nickname));
@@ -115,23 +159,26 @@ export default function Header({ customTitle, roomIdProp }) {
 
       {/* [우측 영역] */}
       <div className="flex items-center gap-3">
-        {/* 인원 라벨[cite: 4] */}
+        {/* 인원 라벨 */}
         <p className="text-dark-gray font-normal">
           {isOverviewMenu ? `${totalCount}명의 멤버` : "참가 멤버"}
         </p>
 
-        {/* 겹쳐지는 아바타 스택[cite: 4] */}
+        {/* 겹쳐지는 아바타 스택 */}
         <div className="flex items-center -space-x-2">
           {visibleMembers.map((member, index) => (
             <div
               key={member.id || index}
               className="w-8 h-8 rounded-full border-2 border-white bg-light-blue overflow-hidden flex items-center justify-center shrink-0 shadow-xs"
             >
-              {member.avatar_url ? (
+              {member.avatar_url && member.avatar_url.startsWith("http") ? (
                 <img
                   src={member.avatar_url}
-                  alt={member.nickname}
+                  alt={member.nickname || "멤버"}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
               ) : (
                 <img
@@ -143,7 +190,7 @@ export default function Header({ customTitle, roomIdProp }) {
             </div>
           ))}
 
-          {/* 타입 1: 4명 초과 시 +N 뱃지[cite: 4] */}
+          {/* 타입 1: 4명 초과 시 +N 뱃지 */}
           {isOverviewMenu && extraCount > 0 && (
             <div className="w-8 h-8 rounded-full border-2 border-white bg-light-blue flex items-center justify-center shrink-0 ml-3">
               <p className="text-main-blue text-[14px] leading-none">
@@ -153,7 +200,7 @@ export default function Header({ customTitle, roomIdProp }) {
           )}
         </div>
 
-        {/* 타입 2, 3: 진행 상태 뱃지 (클릭 시 토글)[cite: 4] */}
+        {/* 타입 2, 3: 진행 상태 뱃지 (클릭 시 토글) */}
         {!isOverviewMenu && activeMeeting && (
           <button
             type="button"
