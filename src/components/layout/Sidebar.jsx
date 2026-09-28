@@ -1,3 +1,4 @@
+// src/components/layout/Sidebar.jsx
 import { useState } from "react";
 import { NavLink, useParams, useNavigate } from "react-router";
 import {
@@ -14,7 +15,7 @@ import {
 import Button from "../common/Button";
 import { useRoom } from "../../hooks/useRoom";
 
-export default function Sidebar({ roomIdProp }) {
+export default function Sidebar({ roomIdProp, onClose }) {
   const { roomId: routeRoomId } = useParams();
   const navigate = useNavigate();
 
@@ -62,6 +63,11 @@ export default function Sidebar({ roomIdProp }) {
     },
   ];
 
+  // 메뉴 클릭 시 모바일 드로어 닫기
+  const handleMenuClick = () => {
+    if (onClose) onClose();
+  };
+
   // 방 코드 복사 핸들러
   const handleCopyCode = async () => {
     if (!currentRoomCode) return;
@@ -77,24 +83,25 @@ export default function Sidebar({ roomIdProp }) {
   // 방 나가기 확인 핸들러
   const handleConfirmExit = () => {
     setIsExitModalOpen(false);
+    if (onClose) onClose();
     navigate("/");
   };
 
   return (
     <>
-      <aside className="relative flex h-screen w-64 flex-col justify-between border-r border-[#EFEFEF] bg-[#F8FAFC] px-7 py-8 select-none shrink-0">
+      <aside className="relative flex h-full min-h-screen w-64 flex-col justify-between border-r border-[#EFEFEF] bg-[#F8FAFC] px-7 py-8 select-none shrink-0">
         {/* 상단 로고 및 방 이름 */}
         <div>
-          <h6 className="text-main-blue tracking-[0.6em] uppercase block mb-6">
+          <h6 className="text-main-blue tracking-[0.6em] uppercase block mb-6 text-xs font-bold">
             MOYEO
           </h6>
 
           {/* Supabase DB에서 조회된 실제 방 이름 */}
-          <h2 className="text-black mb-9 font-bold">
+          <h2 className="text-black mb-9 font-bold text-xl">
             {loading ? "불러오는 중..." : room?.room_name || "모임방"}
           </h2>
 
-          {/* 네비게이션 메뉴 (현재 페이지: text-main-blue, 나머지: text-dark-gray) */}
+          {/* 네비게이션 메뉴 */}
           <nav className="flex flex-col gap-5">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -102,13 +109,14 @@ export default function Sidebar({ roomIdProp }) {
                 <NavLink
                   key={item.name}
                   to={item.path}
+                  onClick={handleMenuClick}
                   className={({ isActive }) =>
                     `flex items-center gap-3 transition-colors duration-150 ${
                       item.isSub ? "pl-5" : ""
                     } ${
                       isActive
                         ? "!text-main-blue !font-semibold"
-                        : "!text-dark-gray hover:!text-black "
+                        : "!text-dark-gray hover:!text-black"
                     }`
                   }
                 >
@@ -125,8 +133,9 @@ export default function Sidebar({ roomIdProp }) {
           <div className="flex items-center gap-1.5 text-dark-gray">
             <p className="text-[14px]">방 코드</p>
             <button
+              type="button"
               onClick={handleCopyCode}
-              className="flex items-center gap-2 !text-main-blue font-semibold hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 !text-main-blue font-semibold hover:opacity-80 transition-opacity cursor-pointer"
               title="방 코드 복사"
             >
               <h6>{currentRoomCode || "------"}</h6>
@@ -139,8 +148,9 @@ export default function Sidebar({ roomIdProp }) {
           </div>
 
           <button
+            type="button"
             onClick={() => setIsExitModalOpen(true)}
-            className="text-dark-gray  transition-colors p-1"
+            className="text-dark-gray transition-colors p-1 cursor-pointer"
             title="방 나가기"
           >
             <LogOut size={20} className="text-dark-gray hover:text-black" />
@@ -151,13 +161,15 @@ export default function Sidebar({ roomIdProp }) {
       {/* 방 나가기 확인 모달 */}
       {isExitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-xs">
-          <div className="w-full max-w-[320px] rounded-2xl bg-white p-6 shadow-xl text-center animate-fade-in-up">
+          <div className="w-full max-w-[320px] rounded-2xl bg-white p-6 shadow-xl text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-light-blue text-main-blue">
               <LogOut className="h-6 w-6 stroke-[2]" />
             </div>
 
-            <h5 className="text-black mb-1 font-bold">방을 나가시겠어요?</h5>
-            <p className="text-dark-gray leading-snug mb-6 ">
+            <h5 className="text-black mb-1 font-bold text-lg">
+              방을 나가시겠어요?
+            </h5>
+            <p className="text-dark-gray leading-snug mb-6 text-sm">
               방 코드를 알고 있으면
               <br />
               언제든 다시 들어올 수 있어요!

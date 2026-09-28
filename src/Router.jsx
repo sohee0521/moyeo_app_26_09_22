@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -6,7 +7,7 @@ import {
   Navigate,
 } from "react-router";
 
-// 사이드바 컴포넌트
+// 사이드바 및 헤더 컴포넌트
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 
@@ -19,8 +20,12 @@ import DateVoteDetail from "./pages/Plan/components/DateVoteDetail";
 import ExpensePage from "./pages/Expense/ExpensePage";
 import SecretPage from "./pages/Secret/SecretPage";
 import MemoryPage from "./pages/Memory/MemoryPage";
+
 function AppLayout() {
   const location = useLocation();
+
+  // 모바일 사이드바 열림/닫힘 상태
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // 온보딩 페이지 판별
   const isOnboardingPage = location.pathname === "/";
@@ -29,32 +34,59 @@ function AppLayout() {
   const roomPathMatch = location.pathname.match(/^\/room\/([^/]+)/);
   const currentRoomId = roomPathMatch ? roomPathMatch[1] : null;
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
-      {/* Sidebar에 추출한 currentRoomId 전달 */}
-      {!isOnboardingPage && <Sidebar roomIdProp={currentRoomId} />}
+  // 페이지 이동 시 열려 있던 모바일 사이드바 닫기
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
+  return (
+    <div className="flex w-screen h-screen overflow-hidden relative bg-white">
+      {/* ========================================================
+          1. PC 화면 전용 사이드바 (md 이상에서만 고정 노출)
+         ======================================================== */}
+      {!isOnboardingPage && (
+        <div className="hidden md:flex shrink-0">
+          <Sidebar roomIdProp={currentRoomId} />
+        </div>
+      )}
+
+      {/* ========================================================
+          2. 모바일 화면 전용 사이드바 드로어 (md 미만에서 메뉴 클릭 시)
+         ======================================================== */}
+      {!isOnboardingPage && isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* 어두운 반투명 딤(Dim) 배경 (누르면 닫힘) */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          {/* 좌측 슬라이드 사이드바 본체 */}
+          <div className="relative z-10 w-fit h-full shadow-2xl">
+            <Sidebar
+              roomIdProp={currentRoomId}
+              onClose={() => setIsMobileMenuOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          3. 메인 콘텐츠 영역 (모바일에서는 100% 꽉 차게 변경)
+         ======================================================== */}
       <main
-        style={{
-          flex: 1,
-          backgroundColor: "#ffffff",
-          overflowY: "auto",
-          padding: isOnboardingPage ? "0" : "32px",
-        }}
-        className="min-h-screen"
+        className={`flex-1 bg-white overflow-y-auto min-h-screen ${
+          isOnboardingPage ? "p-0" : "p-4 sm:p-6 md:p-8"
+        }`}
       >
-        {/* 온보딩이 아닐 때 상단 공통 헤더 노출 */}
-        {!isOnboardingPage && <Header />}
+        {/* 헤더에 햄버거 메뉴를 열 수 있는 함수(onMenuClick) 전달 */}
+        {!isOnboardingPage && (
+          <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+        )}
+
         <div>
           <Routes>
-            {/* 온보딩  */}
+            {/* 온보딩 */}
             <Route path="/" element={<OnboardingPage />} />
 
             {/* 새 모임 */}

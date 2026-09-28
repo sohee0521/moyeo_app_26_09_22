@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
-import { ChevronLeft } from "lucide-react";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useOutletContext,
+} from "react-router";
+import { ChevronLeft, Menu } from "lucide-react";
 import { useRoom } from "../../hooks/useRoom";
 import { roomService } from "../../services/roomService";
 import { supabase } from "../../services/supabaseClient";
 import profileDefault from "../../img/profile-default.png";
 
-// Header.jsx 상단
+// Header.jsx 상단: 로그인 유저 정보 조회
 const getLoggedInUserInfo = async () => {
   // 2. 일반 스토리지 조회 (fallback)
   const candidateKeys = [
@@ -47,10 +52,14 @@ const getLoggedInUserInfo = async () => {
   return "미확인";
 };
 
-export default function Header({ customTitle, roomIdProp }) {
+export default function Header({ customTitle, roomIdProp, onMenuClick }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { roomId: routeRoomId } = useParams();
+
+  // Layout.jsx의 Outlet context에서 사이드바 오픈 함수 받기
+  const outletCtx = useOutletContext() || {};
+  const handleOpenMenu = onMenuClick || outletCtx.openMobileMenu;
 
   // Routes 외부 배치 대비 URL 파싱 fallback
   const pathname = location.pathname;
@@ -142,7 +151,8 @@ export default function Header({ customTitle, roomIdProp }) {
     <header className="w-full flex items-center justify-between border-[#F0F0F0] bg-transparent select-none">
       {/* [좌측 영역] */}
       <div className="flex items-center gap-2">
-        {isDetailPage && (
+        {/* 1. 세부 상세 페이지면 '뒤로가기' 버튼 */}
+        {isDetailPage ? (
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -151,8 +161,24 @@ export default function Header({ customTitle, roomIdProp }) {
           >
             <ChevronLeft className="w-6 h-6 stroke-[2.2]" />
           </button>
+        ) : (
+          /* 2. 일반 메인 페이지일 때 모바일(md 미만)에서만 '햄버거 메뉴' 버튼 표시 */
+          <button
+            type="button"
+            onClick={handleOpenMenu}
+            className="p-1 -ml-1 text-black md:hidden hover:opacity-70 transition-opacity cursor-pointer"
+            title="메뉴 열기"
+          >
+            <Menu className="w-6 h-6 stroke-[2.2]" />
+          </button>
         )}
-        <h2 className="text-black font-bold tracking-tight">
+
+        {/* 타이틀: 모바일 기본 화면에서는 사진처럼 숨기고 본문 h1/h2로 보여주고, PC나 상세페이지에서는 헤더 타이틀 표시 */}
+        <h2
+          className={`text-black font-bold tracking-tight ${
+            !isDetailPage ? "hidden md:block" : "block"
+          }`}
+        >
           {getPageTitle()}
         </h2>
       </div>
@@ -160,7 +186,7 @@ export default function Header({ customTitle, roomIdProp }) {
       {/* [우측 영역] */}
       <div className="flex items-center gap-3">
         {/* 인원 라벨 */}
-        <p className="text-dark-gray font-normal">
+        <p className="text-dark-gray font-normal text-sm">
           {isOverviewMenu ? `${totalCount}명의 멤버` : "참가 멤버"}
         </p>
 
@@ -184,7 +210,7 @@ export default function Header({ customTitle, roomIdProp }) {
                 <img
                   src={profileDefault}
                   alt="기본 프로필"
-                  className="w-[18px] object-cover "
+                  className="w-[18px] object-cover"
                 />
               )}
             </div>
@@ -211,10 +237,10 @@ export default function Header({ customTitle, roomIdProp }) {
           >
             <span
               className={`w-2.5 h-2.5 rounded-full inline-block ${
-                isPlanning ? "bg-status-preparing" : "bg-status-active"
+                isPlanning ? "bg-[#F59E0B]" : "bg-[#10B981]"
               }`}
             />
-            <p className="text-black font-medium">
+            <p className="text-black font-medium text-sm">
               {isPlanning ? "계획중" : "모임중"}
             </p>
           </button>

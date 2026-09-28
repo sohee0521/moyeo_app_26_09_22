@@ -205,7 +205,7 @@ export default function PlanPage() {
         </div>
       ) : (
         /* 2. 생성된 투표 카드 리스트 (2열 그리드) */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-5xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 justify-between w-full ">
           {votes.map((vote) => {
             const isClosed =
               vote.status === "closed" || vote.status === "completed";
@@ -265,7 +265,7 @@ export default function PlanPage() {
                     <div className="flex items-center gap-3">
                       {getVoteIcon(vote.type)}
                       <div>
-                        <h4 className="text-black font-bold">{vote.title}</h4>
+                        <h5 className="text-black font-bold">{vote.title}</h5>
                         <p className="text-xs text-mid-gray mt-0.5">
                           참여 {participatedCount}/{totalMeetingMembersCount}명
                         </p>
